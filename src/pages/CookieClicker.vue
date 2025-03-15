@@ -2,11 +2,21 @@
 import { computed, ref,onMounted } from 'vue';
 import '../styles/CookieAnimation.css';
 
+import grandmaImg from '../assets/grandma.svg';
+import factoryImg from '../assets/factory.svg';
+import farmImg from '../assets/farm.svg';
+import mineImg from '../assets/mine.svg';
+import bankImg from '../assets/bank.svg';
+import cursorImg from '../assets/cursor.svg';
+
 let cookies = ref(0);
 let buildings = ref([
-    {name: 'Cursor', price: 15, cps: 0.1, count: 0},
-    {name: 'Grandma', price: 100, cps: 1, count: 0},
-    {name: 'Farm', price: 1100, cps: 8, count: 0},
+    {name: 'Cursor', price: 15, cps: 0.1, count: 0, img: cursorImg},
+    {name: 'Grandma', price: 100, cps: 1, count: 0, img: grandmaImg},
+    { name: 'Farm', price: 1100, cps: 8, count:0, img: farmImg },
+    { name: 'Mine', price: 12000, cps: 47, count: 0, img:mineImg },
+    { name: 'Factory', price: 120000, cps: 200, count: 0, img: factoryImg },
+    { name: 'Bank', price: 5000000, cps: 5000, count: 0,img: bankImg }
 ]);
 
 //Raining cookies
@@ -19,7 +29,9 @@ onMounted(() => {
             animationDuration: `${4 + Math.random() * 3}s`, 
             animationDelay: `${Math.random() * 2}s`,
         });
-    }, 550); 
+
+    
+    }, 3000); 
 });
 
 
@@ -56,9 +68,11 @@ function cookieClick(){
 }
 
 function buyBuilding(building){
-    cookies.value -= building.price;
-    building.count++;
-    building.price += Math.ceil((building.price / 100) * 15)
+       if (cookies.value >= building.price) {
+        cookies.value -= building.price;
+        building.count++;
+        building.price = Math.ceil(building.price * 1.15);
+    }
 }
 
 const cps = computed(() => {
@@ -98,15 +112,25 @@ const cps = computed(() => {
         <div class="column has-background-info">
 
         </div>
-        <div class="column is-2 has-background-warning">
-            <button v-for="building in buildings" :disabled="cookies < building.price" @click="buyBuilding(building)" class="button is-primary is-large is-fullwidth">{{ building.name }} {{ building.price }} {{ building.count }}</button>
+        <div class="column is-2 has-background--bulma-primary-00">
+            <button 
+                v-for="building in buildings" 
+                :disabled="cookies < building.price" 
+                @click="buyBuilding(building)" 
+                class="button is-text is-large is-fullwidth under"
+            >
+                    <figure v-if="building.img" class="image is-64x64">
+                        <img :src="building.img" alt="" />
+                    </figure> {{ building.name }} {{ building.price }} {{ building.count }}</button>
+             </div>
         </div>
-    </div>
-
 </template>
 
 <style scoped>
 #CookieClicker {
   height: 94vh;
   overflow: hidden;}
+button.under {
+    text-decoration: none; 
+}
 </style>
