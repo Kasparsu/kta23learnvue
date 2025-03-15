@@ -1,0 +1,96 @@
+.press {
+  animation: press 0.15s ease-in-out;
+}
+.small-size {
+  width: 300px;
+  height: 300px;
+}
+
+@keyframes press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+
+.cookie-container {
+  position: relative;
+  z-index: 10;
+}
+
+
+.mini-cookie {
+  position: absolute;
+  width: 55px !important ;
+  height: 55px !important;
+  opacity: 1;
+  animation: fadeOut 0.8s ease-out, floatUp 0.8s ease-out;
+  pointer-events: none;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-30px); }
+}
+
+
+
+.column.is-3 {
+    position: relative; /* To ensure the cookies fall within the column */
+    overflow: hidden; /* Hide cookies that fall outside of the column */
+}
+
+.column.is-3 .container {
+    position: relative; 
+    z-index: 5; 
+}
+
+.is-size-1,
+.is-size-5 {
+    z-index: 5;
+}
+
+.cookie-rain {
+    position: absolute;
+    top: -100px; 
+    transform: translateX(-50%);
+    animation: fall linear infinite;
+    pointer-events: none;
+    z-index: 1
+}
+
+.cookie-rain img {
+    width: 25px; 
+    height: 25px;
+    opacity: 0.75;
+    pointer-events: none;
+}
+
+/* Randomize the position and speed of falling cookies */
+.cookie-rain:nth-child(odd),
+.cookie-rain:nth-child(even),
+.cookie-rain:nth-child(n) {
+    left: calc(100% * var(--random-x));
+    animation-duration: calc(4s + (random(4) * 3s)); 
+    animation-delay: calc(random(4) * 2s); 
+}
+
+@keyframes fall {
+    0% {
+        top: -100px;
+    }
+    100% {
+        top: 100vh; 
+    }
+}
