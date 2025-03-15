@@ -11,9 +11,9 @@ import cursorImg from '../assets/cursor.svg';
 
 let cookies = ref(0);
 let buildings = ref([
-    { name: 'Cursor', price: 1, cps: 400.1, count: 0, img: cursorImg },
-    { name: 'Grandma', price: 1, cps: 1, count: 0, img: grandmaImg },
-    { name: 'Farm', price: 11, cps: 8, count: 0, img: farmImg },
+    { name: 'Cursor', price: 1, cps: 0.1, count: 0, img: cursorImg },
+    { name: 'Grandma', price: 100, cps: 1, count: 0, img: grandmaImg },
+    { name: 'Farm', price: 1100, cps: 8, count: 0, img: farmImg },
     { name: 'Mine', price: 12000, cps: 47, count: 0, img: mineImg },
     { name: 'Factory', price: 120000, cps: 200, count: 0, img: factoryImg },
     { name: 'Bank', price: 5000000, cps: 5000, count: 0, img: bankImg }
