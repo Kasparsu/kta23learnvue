@@ -11,9 +11,12 @@ let buildings = ref([
 
 // CPS Kalkulatsioon
 const cps = computed(() => {
-  return buildings.value.reduce((total, building) => {
+  let baseCPS = buildings.value.reduce((total, building) => {
     return total + building.cps * building.count;
   }, 0);
+  
+  // Apply golden cookie bonus if active
+  return goldenBonusActive.value ? baseCPS * 2 : baseCPS;
 });
 
 //golden cookie system
@@ -45,15 +48,18 @@ let upgrades = ref([
   }
 ]);
 
-let clickPower = ref(1); // Default click power alguseks 1
+let clickPower = ref(1); // Game Start click power is 1
+let bonusTimeRemaining = ref(0); // Time remaining in seconds without bonus
 
-// Laeb local storage
+
+// Load saved game
+
+
 function loadGame() {
   let save = JSON.parse(localStorage.getItem('cookieClickerSave'));
   if (save) {
     cookies.value = save.cookies ?? 0;
     buildings.value = save.buildings ?? buildings.value;
-    goldenBonusActive.value = save.goldenBonusActive ?? false;
     clickPower.value = save.clickPower ?? 1;
     
     // saved upgrades
@@ -64,28 +70,44 @@ function loadGame() {
       });
     }
   }
+
+  // Check if there's an active golden bonus
+  const bonusExpiry = localStorage.getItem('goldenBonusExpiry');
+  if (bonusExpiry) {
+    const expiryTime = parseInt(bonusExpiry);
+    if (expiryTime > Date.now()) {
+      // Bonus is still active
+      goldenBonusActive.value = true;
+      setupBonusTimer(expiryTime);
+    } else {
+      // Bonus has run out while the game was closed
+      localStorage.removeItem('goldenBonusExpiry');
+      goldenBonusActive.value = false;
+    }
+  } else {
+    goldenBonusActive.value = false;
+  }
 }
 
-// save func
+// SaveGame function
 function saveGame() {
   localStorage.setItem('cookieClickerSave', JSON.stringify({
     cookies: cookies.value,
     buildings: buildings.value,
-    goldenBonusActive: goldenBonusActive.value,
     upgrades: upgrades.value,
     clickPower: clickPower.value
   }));
 }
 
-// autosave iga 10 sek
+// Autosave every 10 seconds
 setInterval(saveGame, 10000);
 
-//earn cookies over time
+//Earn cookies over time every second
 setInterval(() => {
   cookies.value += cps.value;
 }, 1000);
 
-// Click Cookie arvestab clickpower upgradega
+// Click Cookie function also works with clickPower
 function cookieClick() {
   cookies.value += clickPower.value;
   saveGame();
@@ -116,14 +138,14 @@ function clickGoldenCookie(id) {
   } else if (randomEffect < 0.7) {
     // 🚀 Double CPS for 30s (30% chance)
     goldenBonusActive.value = true;
-    let originalCPS = cps.value;
-    cps.value *= 2; // Double CPS
-    alert("🚀 Golden Cookie! Your CPS X 2 for 30 seconds!");
-    setTimeout(() => {
-      cps.value = originalCPS;
-      goldenBonusActive.value = false;
-      saveGame();
-    }, 30000);
+    
+    // Store when the bonus should expire (30 seconds from now) lets give 3 second time for notitification of golden cookie
+    const expiryTime = Date.now() + 33000;
+    localStorage.setItem('goldenBonusExpiry', expiryTime.toString());
+    alert("🚀 Golden Cookie! Your CPS X 2 for ≈ 30 seconds!");
+    // Setup the timer to end the bonus
+    setupBonusTimer(expiryTime);
+
   } else {
     // 🎰 Random Discount (30% chance)
     buildings.value.forEach(b => b.price = Math.ceil(b.price * 0.8)); // 20% cheaper
@@ -132,14 +154,36 @@ function clickGoldenCookie(id) {
   saveGame();
 }
 
+// Function to handle bonus timers
+function setupBonusTimer(expiryTime) {
+  const updateRemainingTime = () => {
+    const now = Date.now();
+    const remaining = Math.max(0, Math.floor((expiryTime - now) / 1000)); // convert to seconds
+    
+    bonusTimeRemaining.value = remaining;    
+    if (remaining <= 0) {
+      goldenBonusActive.value = false;
+      localStorage.removeItem('goldenBonusExpiry');
+      bonusTimeRemaining.value = 0;
+      saveGame();
+      clearInterval(timerInterval);
+    }
+  };
+  
+  // Initial update
+  updateRemainingTime();  
+  // update every second
+  const timerInterval = setInterval(updateRemainingTime, 1000);
+}
+
+
 // Surprise spawn goldencookies
 function spawnGoldenCookie() {
   let id = Date.now();
   goldenCookies.value.push({ id, x: Math.random() * 90, y: Math.random() * 90 });
-
   setTimeout(() => {
     goldenCookies.value = goldenCookies.value.filter(cookie => cookie.id !== id);
-  }, 5000);
+  }, 5000); // 5 seconds to click the cookie
 
   setTimeout(spawnGoldenCookie, Math.random() * 60000 + 30000);
 }
@@ -164,6 +208,7 @@ function resetGame() {
   if (confirm("Are you sure you want to start again?")) {
     localStorage.removeItem('cookieClickerSave');
     cookies.value = 0;
+    clickPower.value = 1;
     buildings.value = [
       { name: 'Cursor', price: 15, cps: 0.1, count: 0 },
       { name: 'Grandma', price: 100, cps: 1, count: 0 },
@@ -188,9 +233,13 @@ setTimeout(spawnGoldenCookie, Math.random() * 60000 + 30000);
     <!-- Main Cookie Clicker UI -->
     <div class="columns is-multiline">
       <!-- Cookie & Stats Section -->
-      <div class="column is-3 box has-background-primary has-text-centered">
+      <div class="column cookie-clicker-column is-3 box has-background-primary has-text-centered">
         <h1 class="title has-text-white">🍪 Cookies: {{ cookies.toFixed(1) }}</h1>
         <h2 class="subtitle has-text-white">CPS: {{ cps.toFixed(1) }}</h2>
+            <!-- bonus timer -->
+        <h3 v-if="goldenBonusActive && bonusTimeRemaining > 0" class="subtitle has-text-warning">
+  🚀 CPS Bonus: {{ bonusTimeRemaining }}s remaining
+</h3>
         <h3 class="subtitle has-text-warning">Click Power: {{ clickPower }}</h3> 
         <figure @click="cookieClick" class="image is-128x128 m-auto">
           <img src="https://pngimg.com/uploads/cookie/cookie_PNG13656.png" class="clickable-cookie" />
@@ -198,7 +247,7 @@ setTimeout(spawnGoldenCookie, Math.random() * 60000 + 30000);
       </div>
 
       <!-- Buildings Section -->
-      <div class="column is-3 box has-background-warning">
+      <div class="column cookie-clicker-column is-3 box has-background-warning">
         <h2 class="title is-5 has-text-centered">Buildings 🏗️</h2>
         <span class="is-size-7 has-text-dark has-text-centered pb-3">
           Buy buildings that generate more cookies per second!.
@@ -217,7 +266,7 @@ setTimeout(spawnGoldenCookie, Math.random() * 60000 + 30000);
       </div>
 
       <!-- Upgrades Section -->
-      <div class="column is-3 box has-background-light">
+      <div class="column cookie-clicker-column is-3 box has-background-light">
         <h2 class="title is-5 has-text-black has-text-centered">Upgrades 🛠️</h2>
         <span class="is-size-7 has-text-dark has-text-centered pb-3">
           Buy upgrades that improve your cookie production.
@@ -236,7 +285,7 @@ setTimeout(spawnGoldenCookie, Math.random() * 60000 + 30000);
       </div>
 
       <!-- Reset Button -->
-      <div class="column is-3 box has-background-danger has-text-centered">
+      <div class="column cookie-clicker-column is-3 box has-background-danger has-text-centered">
         <button @click="resetGame" class="button is-dark is-medium">
           Reset Game 🔄
         </button>
@@ -261,3 +310,64 @@ setTimeout(spawnGoldenCookie, Math.random() * 60000 + 30000);
     </div>
   </div>
 </template>
+
+<style scoped>
+@import "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css";
+
+.golden-cookie {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, gold, orange);
+  border-radius: 50%;
+  font-size: 2rem;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.2s;
+  box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.8);
+  z-index: 999;
+}
+
+.golden-cookie:hover {
+  transform: scale(1.2);
+}
+
+.clickable-cookie {
+  transition: transform 0.1s ease-in-out;
+  cursor: pointer;
+}
+
+.clickable-cookie:active {
+  transform: scale(0.8);
+}
+
+.golden-cookie-info {
+  position: relative;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 215, 0, 0.9);
+  color: black;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 400px;
+  z-index: 999;
+  border: 2px solid red;
+}
+
+/* scoped column styling only this component */
+.cookie-clicker-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px; 
+}
+</style>
