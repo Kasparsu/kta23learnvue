@@ -1,6 +1,5 @@
 <template>
     <div class="cookie-clicker">
-      <!-- Main Cookie Display -->
       <div class="cookie-container">
         <h1>Cookies: {{ formattedCookies }}</h1>
         <h2>CPS: {{ cookiesPerSecond.toFixed(1) }}</h2>
@@ -9,7 +8,7 @@
         </button>
       </div>
   
-      <!-- Upgrade Images Display Area -->
+
       <div class="upgrade-display-area">
       <div class="debug-info" v-if="debugMode">
         Debug Info: 
@@ -40,7 +39,7 @@
         @error="handleImageError('farm')"
       >
     </div>
-      <!-- Upgrades Section -->
+
       <div class="upgrades-section">
         <h2>Upgrades</h2>
         <div class="upgrades-list">
@@ -69,7 +68,7 @@
         </div>
       </div>
   
-      <!-- Achievement Notification -->
+
       <transition name="slide-fade">
         <div v-if="showAchievementNotification" class="achievement-notification">
           <span class="badge">✓</span>
@@ -150,17 +149,17 @@
     };
   },
 
-  // Update your purchase method to ensure it's working
+  
   purchaseUpgrade(index) {
     const upgrade = this.availableUpgrades[index];
     if (this.cookies >= upgrade.cost) {
       this.cookies -= upgrade.cost;
-      upgrade.owned += 1; // Changed from ++ to += 1 for clarity
+      upgrade.owned += 1; 
       this.cookiesPerSecond += upgrade.value;
       upgrade.cost = Math.floor(upgrade.cost * 1.15);
-      this.saveGame(); // Ensure this is called
+      this.saveGame(); 
       
-      // Force update (sometimes needed for Vue's reactivity)
+
       this.$forceUpdate(); 
       
       console.log(`Purchased ${upgrade.name}`, upgrade);
@@ -168,7 +167,7 @@
   },
       },
       checkAchievements() {
-        // Achievement checks would go here
+
       },
       startGameLoop() {
         this.gameLoop = setInterval(() => {
@@ -263,8 +262,7 @@
   border-radius: 10px;
   margin: 20px 0;
   position: relative;
-  overflow: visible; /* Changed from hidden */
-  border: 2px dashed #ccc; /* Temporary for debugging */
+  overflow: visible;
 }
 
 .upgrade-visual {
@@ -392,7 +390,6 @@
     font-weight: bold;
   }
   
-  /* Animations */
   .fade-enter-active, .fade-leave-active {
     transition: opacity 0.5s, transform 0.5s;
   }
