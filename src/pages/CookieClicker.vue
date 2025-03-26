@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import Swal from 'sweetalert2';
 
 // Game Vars
 let cookies = ref(0);
@@ -9,7 +10,7 @@ let buildings = ref([
   { name: 'Farm', price: 1100, cps: 8, count: 0 },
 ]);
 
-// CPS Kalkulatsioon
+// CPS Calculation
 const cps = computed(() => {
   let baseCPS = buildings.value.reduce((total, building) => {
     return total + building.cps * building.count;
@@ -205,21 +206,36 @@ function buyUpgrade(upgrade) {
 
 // start from beginning
 function resetGame() {
-  if (confirm("Are you sure you want to start again?")) {
-    localStorage.removeItem('cookieClickerSave');
-    cookies.value = 0;
-    clickPower.value = 1;
-    buildings.value = [
-      { name: 'Cursor', price: 15, cps: 0.1, count: 0 },
-      { name: 'Grandma', price: 100, cps: 1, count: 0 },
-      { name: 'Farm', price: 1100, cps: 8, count: 0 },
-    ];
-    goldenCookies.value = [];
-    goldenBonusActive.value = false;
-    upgrades.value.forEach(upgrade => upgrade.bought = false); 
-    saveGame();
-    location.reload();
-  }
+  Swal.fire({
+    title: 'Are you sure, All progress will be lost',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: 'darkred',
+    cancelButtonColor: 'green',
+    confirmButtonText: 'Yes!',
+    cancelButtonText: 'No, I want to click some more!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      localStorage.removeItem('cookieClickerSave');
+      cookies.value = 0;
+      clickPower.value = 1;
+      buildings.value = [
+        { name: 'Cursor', price: 15, cps: 0.1, count: 0 },
+        { name: 'Grandma', price: 100, cps: 1, count: 0 },
+        { name: 'Farm', price: 1100, cps: 8, count: 0 },
+      ];
+      goldenCookies.value = [];
+      goldenBonusActive.value = false;
+      upgrades.value.forEach(upgrade => upgrade.bought = false); 
+      saveGame();
+      
+      Swal.fire(
+        'New Game!'    
+      ).then(() => {
+        location.reload();
+      });
+    }
+  });
 }
 
 loadGame();
