@@ -2,14 +2,12 @@
 import { computed, ref } from 'vue';
 
 const cookies = ref(0);
-const clickPower = ref(1);  
-const cursorMultiplier = ref(1); 
 
 const upgrades = ref([
-    {name: '2x Click', price: 100, effect: 'click', multiplier: 2},
-    {name: '2x Cursor', price: 500, effect: 'cursor', multiplier: 2},
-    {name: '3x Click', price: 1000, effect: 'click', multiplier: 3},
-    {name: '3x Cursor', price: 3000, effect: 'click', multiplier: 3},
+    {name: '2x Click', price: 100, effect: 'click', multiplier: 2, purchased: false},
+    {name: '2x Cursor', price: 500, effect: 'cursor', multiplier: 2, purchased: false},
+    {name: '3x Click', price: 1000, effect: 'click', multiplier: 3, purchased: false},
+    {name: '3x Cursor', price: 3000, effect: 'cursor', multiplier: 3, purchased: false},
 ]);
 
 const buildings = ref([
@@ -24,19 +22,6 @@ setInterval(() => {
 
 function cookieClick(){
     cookies.value += clickPower.value;
-}
-
-function buyUpgrade(upgrade) {
-    if (cookies.value >= upgrade.price) {
-        if (upgrade.effect === 'click') {
-            clickPower.value *= upgrade.multiplier;  
-        } else if (upgrade.effect === 'cursor') {
-            cursorMultiplier.value *= upgrade.multiplier;  
-        }
-
-        cookies.value -= upgrade.price;
-        upgrade.price = Math.ceil(upgrade.price * 1.5); 
-    }
 }
 
 function buyBuilding(building){
@@ -55,6 +40,25 @@ const cps = computed(() => {
     }, 0)
 });
 
+function buyUpgrade(upgrade) {
+    if (cookies.value >= upgrade.price && !upgrade.purchased) {
+        cookies.value -= upgrade.price;
+        upgrade.purchased = true;
+    }
+}
+
+const clickPower = computed(() => {
+    return upgrades.value
+        .filter(upg => upg.purchased && upg.effect === 'click')
+        .reduce((total, upg) => total * upg.multiplier, 1);
+});
+
+const cursorMultiplier = computed(() => {
+    return upgrades.value
+        .filter(upg => upg.purchased && upg.effect === 'cursor')
+        .reduce((total, upg) => total * upg.multiplier, 1);
+});
+
 </script>
 <template>
     <div class="columns">
@@ -69,7 +73,6 @@ const cps = computed(() => {
             </figure>
         </div>
         <div class="column has-background-info">
-
         </div>
 
  <!-- Store & Buildings Section -->
@@ -79,10 +82,11 @@ const cps = computed(() => {
                 <p class="is-size-5 has-text-centered">Store</p>
                 <div v-for="upgrade in upgrades" :key="upgrade.name" class="card m-2 p-2">
                     <button 
-                        :disabled="cookies < upgrade.price"
+                        :disabled="cookies < upgrade.price || upgrade.purchased"
                         @click="buyUpgrade(upgrade)"
                         class="button is-info is-fullwidth is-small">
                         {{ upgrade.name }} - Price: {{ upgrade.price }}
+                        <span v-if="upgrade.purchased"> ✔</span>
                     </button>
                     <p class="is-size-7">Effect: {{ upgrade.effect === 'click' ? 'Click Power' : 'Cursor Efficiency' }} x{{ upgrade.multiplier }}</p>
                 </div>
